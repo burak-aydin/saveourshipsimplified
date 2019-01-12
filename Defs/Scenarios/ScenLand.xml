@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ScenPartDef>
+    <defName>Rule_LandShip</defName>
+    <label>land ship</label>
+    <scenPartClass>saveourship.ScenLand</scenPartClass>
+    <category>StartingImportant</category>
+    <selectionWeight>1.0</selectionWeight>
+    <summaryPriority>999</summaryPriority>
+  </ScenPartDef>
+  
+  
+  
+  <ScenarioDef>
+    <defName>Scen_Shiplanding</defName>
+    <label>Ship Landing</label>
+    <description>Your ship is landing to another rimworld.</description>
+    <scenario>
+      <summary>Ship Landing.</summary>
+      <playerFaction>
+        <def>PlayerFaction</def>
+        <factionDef>PlayerColony</factionDef>
+      </playerFaction>
+      <parts>
+        <!-- Config pages -->
+
+        <!-- Player pawns modifiers -->
+        <li Class="ScenPart_ForcedHediff">
+          <def>ForcedHediff</def>
+          <visible>false</visible>
+          <context>PlayerStarter</context>
+          <chance>1.0</chance>
+          <hediff>CryptosleepSickness</hediff>
+          <hideOffMap>true</hideOffMap>
+          <severityRange>
+            <min>1</min>
+            <max>1</max>
+          </severityRange>
+        </li>
+        
+        <!-- Player starting things -->
+        
+				<li Class="saveourship.ScenLand">
+				<def>Rule_LandShip</def>
+				<shipFactionName>New Arrivals</shipFactionName>
+			</li>
+               
+        <!-- Game start dialog -->
+        <li Class="ScenPart_GameStartDialog">
+          <def>GameStartDialog</def>
+          <text>After thousands of years, your ship lands to the unknown and wakes you up</text>
+          <closeSound>GameStartSting</closeSound>
+        </li>
+        
+      </parts>
+    </scenario>
+  </ScenarioDef>
+
+
+
+
+</Defs>
