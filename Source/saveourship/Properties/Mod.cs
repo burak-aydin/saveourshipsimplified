@@ -168,7 +168,7 @@ namespace saveourship
         private void loadShip(Map map)
         {
             Log.Message("Loading ship");
-            string file = Path.Combine(Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships"), "New Arrivals" + ".rwship");
+            string file = Path.Combine(Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships"), shipFactionName + ".rwship");
             if (!File.Exists(file))
             {
                 Log.Error("File Doesnt exist");
@@ -306,10 +306,10 @@ namespace saveourship
             // add ship to map
             new ThingMutator<Building>()
                 .For<Building>(x => x.SpawnSetup(map, false))
+                .For<Building>(x => x.SetFaction(Current.Game.World.factionManager.OfPlayer))
                 .SetAsHome<Building>()
                 .UnsafeExecute(ship, Handler);
-
-
+            
 
             Scribe_Deep.Look(ref Current.Game.playLog, false, "playLog", new object[0]);
                         
