@@ -14,7 +14,6 @@ using System.IO;
 namespace saveourship
 {
 
-
     [StaticConstructorOnStartup]
     public static class MyDetours
     {
@@ -65,24 +64,23 @@ namespace saveourship
                 ScribeMetaHeaderUtility.WriteMetaHeader();
                 Scribe_Defs.Look<FactionDef>(ref Faction.OfPlayer.def, "playerFactionDef");
 
-
                // Scribe_Deep.Look<List<Building>>(ref list, "ship",false, new UnityEngine.Object[0]);   
                                                                                
                 Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
 
-                /*
-                int i = 0;
-                foreach(Building building in list)
+                List<Pawn> launchedpawns = new List<Pawn>();
+                foreach (Building building in list)
                 {
-                    if(building.def == ThingDefOf.Ship_CryptosleepCasket)
+                    if (building.def == ThingDefOf.Ship_CryptosleepCasket)
                     {
-                        Building_CryptosleepCasket casket = building as Building_CryptosleepCasket;
-                        Pawn pawn = casket.ContainedThing as Pawn;
-                        Scribe_Deep.Look<Pawn>(ref pawn, "pawn" + i.ToString());
-                        i++;
-                    }
+                        Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
+                        if (cask.HasAnyContents)
+                        {
+                            Pawn pawn = cask.ContainedThing as Pawn;
+                            launchedpawns.Add(pawn);
+                        }
+                    }                  
                 }
-                */
 
                 Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);
                 Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
@@ -91,10 +89,63 @@ namespace saveourship
                 Scribe_Deep.Look<DrugPolicyDatabase>(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
                 Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
                 Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
-                Scribe_Deep.Look<WorldPawns>(ref Current.Game.World.worldPawns, false, "worldPawns", new object[0]);
 
-                
+                List<Pawn> savedpawns = new List<Pawn>();
+                List<Pawn> mappawns = Current.Game.CurrentMap.mapPawns.AllPawns.ToList();
+                for (int i = 0;i < mappawns.Count; i++)
+                {
+                    Pawn p = mappawns[i];
+                    if(p == null)
+                        continue;
+                    if(p.Faction != Faction.OfPlayer)
+                        continue;
+                    if (launchedpawns.Contains(p))
+                        continue;
+                    Log.Message("rpawns:"+p.Name);
+                    savedpawns.Add(p);
+                }
+                for(int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
+                {
+                    Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
+                    if (pawn == null)
+                    {
+                        continue;
+                    }
+                    Log.Message("wpn:" + pawn.Name);
+                    if(pawn.Faction == Faction.OfPlayer)
+                    {
+                        Log.Message("colonistsaved:"+ pawn.Name);
+                        savedpawns.Add(pawn);
+                        continue;
+                    }
+                    
+                    foreach(Pawn colonist in launchedpawns)
+                    {
+                        bool doo = false;
+                        if (
+                        pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
+                        || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
+                        || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                        {
+                            doo = true;
+                        }
+                        if (pawn.relations.FamilyByBlood.Contains(colonist))
+                        {
+                            doo = true;
+                        }
+                        if (doo)
+                        {
+                            pawn.SetFaction(Faction.OfPlayer);
+                            Log.Message("relativeof:" + colonist.Name);
+                            savedpawns.Add(pawn);
+                            break;
+                        }
+                    }                    
+                }
 
+                Log.Message("Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count:" + Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count());
+
+                Scribe_Collections.Look<Pawn>(ref savedpawns, "oldpawns", LookMode.Deep);
 
             }));
 
@@ -146,13 +197,14 @@ namespace saveourship
        
     public class ScenLand : ScenPart
     {
-     
+
+        public bool saveresearch = true;
+        public bool saveworldpawns = true;
+
         public string shipFactionName;
         public override void PostMapGenerate(Map map)
         {
-
             loadShip(map);           
-         //   GameDataSaveLoader.LoadGame("name.rws");            
         }
 
         public override void GenerateIntoMap(Map map)
@@ -177,23 +229,24 @@ namespace saveourship
 
           //  Find.GameInitData.startedFromEntry = false;
             Scribe.loader.InitLoading(file);
-
+            
             Scribe_Defs.Look(ref Faction.OfPlayer.def, "playerFactionDef");
             string actualFactionName = Faction.OfPlayer.Name;
-            shipFactionName = actualFactionName;
-
+            //shipFactionName = actualFactionName;
 
             Scribe_Deep.Look(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
-            Scribe_Deep.Look(ref Current.Game.tickManager, false, "tickManager", new object[0]);
             Scribe_Deep.Look(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
             Scribe_Deep.Look(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
-            Scribe_Deep.Look(ref Current.Game.World.worldPawns, false, "worldPawns", new object[0]);
 
+            List<Pawn> oldpawns = new List<Pawn>();
+            Scribe_Collections.Look<Pawn>(ref oldpawns,"oldpawns",LookMode.Deep);
+            
             List<Building> ship = new List<Building>();
 
             Scribe_Collections.Look<Building>(ref ship, "buildings", LookMode.Deep);
 
-
+            Scribe.loader.FinalizeLoading();
+            
             if (ship == null){
                 Log.Error("ship null");
                 return;
@@ -207,13 +260,13 @@ namespace saveourship
             IntVec3 spot = MapGenerator.PlayerStartSpot;
             IntVec3 offset = spot - ship[0].Position;
 
-
             IntVec3 shipcoordmin = new IntVec3(ship[0].Position.ToVector3() + offset.ToVector3());
             IntVec3 shipcoordmax = new IntVec3(ship[0].Position.ToVector3() + offset.ToVector3());
-
-            Log.Message("Shipfixstart");
-            foreach (Building building in ship)
+            
+            Log.Message("Shipfix");
+            for (int i = 0; i < ship.Count; i++)
             {
+                Building building = ship.ElementAt(i);
                 building.Position += offset;
                 if (shipcoordmax.x < building.Position.x)
                 {
@@ -231,29 +284,24 @@ namespace saveourship
                 {
                     shipcoordmin.z = building.Position.z;
                 }
-
-                /*
+                building.SetFaction(Current.Game.World.factionManager.OfPlayer);
+                
+                if(building.def == ThingDefOf.Ship_ComputerCore)
+                {
+                    ship.RemoveAt(i);
+                    i--;
+                    continue;
+                }
                 if (building.def == ThingDefOf.Ship_CryptosleepCasket)
                 {
                     Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
                     if (cask.HasAnyContents)
                     {
                         Pawn pawn = cask.ContainedThing as Pawn;
-                        PawnComponentsUtility.AddComponentsForSpawn(pawn);
-
-                        
-
-                        List<Hediff> hediffs = new List<Hediff>(pawn.health.hediffSet.hediffs);
-                        pawn.health.Reset();
-                        foreach(Hediff h in hediffs)
-                        {                         
-                            pawn.health.AddHediff(h);
-                        }
-                                             
+                        Log.Message("pawn.name:" + pawn.Name);     
+                        pawn.SetFaction(Current.Game.World.factionManager.OfPlayer);
                     }
                 }
-                */
-
                 Building_ShipReactor building_ShipReactor = new Building_ShipReactor();
                 CompHibernatable hibernatable = building.TryGetComp<CompHibernatable>();               
                 if (hibernatable != null)
@@ -265,12 +313,15 @@ namespace saveourship
                 }
             }
             Log.Message("Shipfixend");
-
-
-           Scribe_Deep.Look(ref Current.Game.researchManager, false, "researchManager", new object[0]);
-
+                        
+            foreach(Pawn pawn in oldpawns)
+            {
+                Log.Message("wpawn:" + pawn.Name);
+                pawn.SetFaction(Faction.OfAncients);
+                pawn.health.SetDead();
+                Current.Game.World.worldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+            }
             
-
             Log.Message("setting terrain");
             // set terrain and remove walls etc
             shipcoordmax += new IntVec3(3, 0, 3);
@@ -306,26 +357,11 @@ namespace saveourship
             // add ship to map
             new ThingMutator<Building>()
                 .For<Building>(x => x.SpawnSetup(map, false))
-                .For<Building>(x => x.SetFaction(Current.Game.World.factionManager.OfPlayer))
                 .SetAsHome<Building>()
                 .UnsafeExecute(ship, Handler);
             
-
-            Scribe_Deep.Look(ref Current.Game.playLog, false, "playLog", new object[0]);
-                        
-            Log.Message("preload");
-            TaleManager taleManager = null;
-            Scribe_Deep.Look(ref taleManager, false, "taleManager", new object[0]);
-            Log.Message("load");
-            Current.Game.taleManager = taleManager;
-           
-
-
-            Scribe.loader.FinalizeLoading();
-
-           
-            Log.Message("Loading ship complete");           
-
+            Log.Message("finalizing");
+            Log.Message("Loading ship complete");
         }
 
         public override IEnumerable<string> GetSummaryListEntries(string tag)

@@ -4,3 +4,4 @@ D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShip\Source\saveourship\obj\Debug
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Assemblies\saveourship.dll
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Debug\saveourship.csproj.CoreCompileInputs.cache
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Debug\saveourship.dll
+D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Debug\saveourship.csprojAssemblyReference.cache
