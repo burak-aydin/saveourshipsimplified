@@ -14,6 +14,42 @@ using System.IO;
 namespace saveourship
 {
 
+    
+    public class saveourship : Mod
+    {
+        public static Saveourships_settings settings;
+
+        public saveourship(ModContentPack content) : base(content)
+        {
+            settings = GetSettings<Saveourships_settings>();
+        }
+
+        public override string SettingsCategory() => "Save Our Ship Simplified";
+
+        public override void DoSettingsWindowContents(Rect inRect)
+        {
+            checked
+            {
+                Listing_Standard listing_Standard = new Listing_Standard();
+                listing_Standard.Begin(inRect);
+                
+                listing_Standard.CheckboxLabeled("Save tech" , ref Saveourships_settings.save_tech);
+                listing_Standard.End();
+                settings.Write();
+            }
+        }
+
+        public override void WriteSettings()
+        {
+            base.WriteSettings(); 
+            
+        }
+
+
+
+    }
+
+
     [StaticConstructorOnStartup]
     public static class MyDetours
     {
@@ -238,6 +274,12 @@ namespace saveourship
             Scribe_Deep.Look(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
             Scribe_Deep.Look(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
 
+            Log.Message("techsave:" + Saveourships_settings.save_tech);
+            if (Saveourships_settings.save_tech)
+            {
+                Scribe_Deep.Look(ref Current.Game.researchManager, false, "researchManager", new object[0]);
+            }
+
             List<Pawn> oldpawns = new List<Pawn>();
             Scribe_Collections.Look<Pawn>(ref oldpawns,"oldpawns",LookMode.Deep);
             
@@ -412,6 +454,7 @@ namespace saveourship
         
 
     }
+        
 }
 
 
