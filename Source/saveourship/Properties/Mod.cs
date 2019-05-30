@@ -61,48 +61,33 @@ namespace saveourship
         private static void saveShip(List<Building> list)
         {
             string str1 = Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships");
+            str1.Replace('/', '\\');
             string name = Faction.OfPlayer.Name;
-
-
-            string str2 = Path.Combine(str1, name + ".rwship");
-
-            bool zero = true;
-            System.IO.Directory.CreateDirectory(str1);
-            while (System.IO.Directory.Exists(str2))
+            if (!System.IO.Directory.Exists(str1))
             {
-                if (zero)
-                {
-                    name += "1";
-                    str2 = Path.Combine(str1, name + ".rwship");
-                    zero = false;
-                }
-                else
-                {
-
-                    int i;
-                    if (Int32.TryParse(name.Last().ToString(), out i))
-                    {
-                        name = name.Substring(0, name.Length - 1);
-                        name += ++i;
-                        str2 = Path.Combine(str1, name + ".rwship");
-                    }
-                    else
-                    {
-                        Log.Error("name parsing error");
-                    }
-
-
-                }
+                System.IO.Directory.CreateDirectory(str1);
             }
 
+
+            int num = 0;
+            string orstr2 = Path.Combine(str1, name);
+            Log.Message(orstr2);
+            string str2 = orstr2 + ".rwship";
+            while (System.IO.File.Exists(str2))
+            {
+                num++;
+                str2 = orstr2 + num.ToString() + ".rwship";
+            }
+
+            Log.Message(str2);            
             SafeSaver.Save(str2, "RWShip", (Action)(() =>
             {
                 ScribeMetaHeaderUtility.WriteMetaHeader();
                 Scribe_Defs.Look<FactionDef>(ref Faction.OfPlayer.def, "playerFactionDef");
 
-               // Scribe_Deep.Look<List<Building>>(ref list, "ship",false, new UnityEngine.Object[0]);   
-                                                                               
-                Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
+            // Scribe_Deep.Look<List<Building>>(ref list, "ship",false, new UnityEngine.Object[0]);   
+
+            Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
 
                 List<Pawn> launchedpawns = new List<Pawn>();
                 foreach (Building building in list)
@@ -115,32 +100,34 @@ namespace saveourship
                             Pawn pawn = cask.ContainedThing as Pawn;
                             launchedpawns.Add(pawn);
                         }
-                    }                  
+                    }
                 }
 
                 Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);
                 Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
                 Scribe_Deep.Look<UniqueIDsManager>(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
-                Scribe_Deep.Look<TickManager>(ref Current.Game.tickManager, false, "tickManager", new object[0]);
                 Scribe_Deep.Look<DrugPolicyDatabase>(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
                 Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
                 Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
 
+                int year = GenDate.Year((long)Find.TickManager.TicksAbs, 0.0f);
+                Scribe_Values.Look<int>(ref year, "currentyear", 0);
+
                 List<Pawn> savedpawns = new List<Pawn>();
                 List<Pawn> mappawns = Current.Game.CurrentMap.mapPawns.AllPawns.ToList();
-                for (int i = 0;i < mappawns.Count; i++)
+                for (int i = 0; i < mappawns.Count; i++)
                 {
                     Pawn p = mappawns[i];
-                    if(p == null)
+                    if (p == null)
                         continue;
-                    if(p.Faction != Faction.OfPlayer)
+                    if (p.Faction != Faction.OfPlayer)
                         continue;
                     if (launchedpawns.Contains(p))
                         continue;
-                    Log.Message("rpawns:"+p.Name);
+                    Log.Message("rpawns:" + p.Name);
                     savedpawns.Add(p);
                 }
-                for(int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
+                for (int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
                 {
                     Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
                     if (pawn == null)
@@ -148,14 +135,14 @@ namespace saveourship
                         continue;
                     }
                     Log.Message("wpn:" + pawn.Name);
-                    if(pawn.Faction == Faction.OfPlayer)
+                    if (pawn.Faction == Faction.OfPlayer)
                     {
-                        Log.Message("colonistsaved:"+ pawn.Name);
+                        Log.Message("colonistsaved:" + pawn.Name);
                         savedpawns.Add(pawn);
                         continue;
                     }
-                    
-                    foreach(Pawn colonist in launchedpawns)
+
+                    foreach (Pawn colonist in launchedpawns)
                     {
                         bool doo = false;
                         if (
@@ -176,7 +163,7 @@ namespace saveourship
                             savedpawns.Add(pawn);
                             break;
                         }
-                    }                    
+                    }
                 }
 
                 Log.Message("Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count:" + Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count());
@@ -190,6 +177,8 @@ namespace saveourship
         static FieldInfo pht_root = typeof(ShipCountdown).GetField("shipRoot", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         public static void countdownend()
         {
+            
+
             if (pht_root == null)
             {
                 Log.Error("pht_root null");
@@ -205,9 +194,9 @@ namespace saveourship
                 Log.Error("list null");
                 return;
             }
+           
 
-            saveShip(list);
-            
+
             StringBuilder stringBuilder = new StringBuilder();
             foreach (Building building in list)
             {
@@ -224,9 +213,19 @@ namespace saveourship
                 building.Destroy(DestroyMode.Vanish);
                 Log.Message("111");
             }
-            
             string victoryText = "GameOverShipLaunched".Translate(stringBuilder.ToString(), GameVictoryUtility.PawnsLeftBehind());
             GameVictoryUtility.ShowCredits(victoryText);
+
+
+            try
+            {
+
+                saveShip(list);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.Message);
+            }
 
         }
             }
@@ -236,11 +235,22 @@ namespace saveourship
 
         public bool saveresearch = true;
         public bool saveworldpawns = true;
+        public bool canGenerateship = false;
 
         public string shipFactionName;
         public override void PostMapGenerate(Map map)
         {
-            loadShip(map);           
+            if (canGenerateship)
+            {
+
+                if (map.gameConditionManager.ownerMap.IsPlayerHome && !map.gameConditionManager.ownerMap.IsTempIncidentMap)
+                {
+                    loadShip(map);
+                }
+                canGenerateship = false;
+            }
+
+
         }
 
         public override void GenerateIntoMap(Map map)
@@ -248,6 +258,7 @@ namespace saveourship
         }
         public override void PostWorldGenerate()
         {
+            canGenerateship = true;
             Find.GameInitData.startingPawnCount = 0;   
         }
 
@@ -273,6 +284,23 @@ namespace saveourship
             Scribe_Deep.Look(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
             Scribe_Deep.Look(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
             Scribe_Deep.Look(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
+
+
+            int currentyear = 0; 
+            Scribe_Values.Look<int>(ref currentyear, "currentyear", 0);
+            
+            if (currentyear != 0)
+            {
+                if (currentyear <= int.MaxValue - 3600000)
+                {
+                    Scribe_Values.Look<int>(ref currentyear, "gameStartAbsTick", 0, false);
+
+
+                    currentyear -= 5500;
+                    currentyear += 20;
+                    Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + currentyear * 3600000);
+                }
+            }
 
             Log.Message("techsave:" + Saveourships_settings.save_tech);
             if (Saveourships_settings.save_tech)
