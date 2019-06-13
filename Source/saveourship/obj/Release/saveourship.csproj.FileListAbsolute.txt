@@ -5,7 +5,9 @@ D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShip\Source\saveourship\obj\Relea
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShip\Source\saveourship\obj\Release\saveourship.pdb
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\bin\Release\saveourship.dll
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\bin\Release\saveourship.pdb
-D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Release\saveourship.csprojAssemblyReference.cache
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Release\saveourship.csproj.CoreCompileInputs.cache
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Release\saveourship.dll
 D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Release\saveourship.pdb
+D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Assemblies\saveourship.dll
+D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Assemblies\saveourship.pdb
+D:\Steam\steamapps\common\RimWorld\Mods\SaveOurShipSimplified\Source\saveourship\obj\Release\saveourship.csprojAssemblyReference.cache

@@ -60,17 +60,25 @@ namespace saveourship
 
         private static void saveShip(List<Building> list)
         {
+            string saved_name = "def";
+            foreach (Building building in list)
+            {                
+                if (building.def == ThingDefOf.Ship_ComputerCore)
+                {
+                    Building_CustomShipComputerCore core = building as Building_CustomShipComputerCore;
+                    saved_name = core.outputname;
+                }
+            }
+                                 
             string str1 = Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships");
             str1.Replace('/', '\\');
-            string name = Faction.OfPlayer.Name;
             if (!System.IO.Directory.Exists(str1))
             {
                 System.IO.Directory.CreateDirectory(str1);
             }
 
-
             int num = 0;
-            string orstr2 = Path.Combine(str1, name);
+            string orstr2 = Path.Combine(str1, saved_name);
             Log.Message(orstr2);
             string str2 = orstr2 + ".rwship";
             while (System.IO.File.Exists(str2))
@@ -79,98 +87,104 @@ namespace saveourship
                 str2 = orstr2 + num.ToString() + ".rwship";
             }
 
-            Log.Message(str2);            
-            SafeSaver.Save(str2, "RWShip", (Action)(() =>
+            Log.Message(str2);
+            try
             {
-                ScribeMetaHeaderUtility.WriteMetaHeader();
-                Scribe_Defs.Look<FactionDef>(ref Faction.OfPlayer.def, "playerFactionDef");
-
-            // Scribe_Deep.Look<List<Building>>(ref list, "ship",false, new UnityEngine.Object[0]);   
-
-            Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
-
-                List<Pawn> launchedpawns = new List<Pawn>();
-                foreach (Building building in list)
+                SafeSaver.Save(str2, "RWShip", (Action)(() =>
                 {
-                    if (building.def == ThingDefOf.Ship_CryptosleepCasket)
+                    ScribeMetaHeaderUtility.WriteMetaHeader();
+
+
+                    List<Pawn> launchedpawns = new List<Pawn>();
+                    foreach (Building building in list)
                     {
-                        Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
-                        if (cask.HasAnyContents)
+                        if (building.def == ThingDefOf.Ship_CryptosleepCasket)
                         {
-                            Pawn pawn = cask.ContainedThing as Pawn;
-                            launchedpawns.Add(pawn);
+                            Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
+                            if (cask.HasAnyContents)
+                            {
+                                Pawn pawn = cask.ContainedThing as Pawn;
+                                launchedpawns.Add(pawn);
+                            }
                         }
                     }
-                }
 
-                Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);
-                Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
-                Scribe_Deep.Look<UniqueIDsManager>(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
-                Scribe_Deep.Look<DrugPolicyDatabase>(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
-                Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
-                Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
+                    //start saving
+                    Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
 
-                int year = GenDate.Year((long)Find.TickManager.TicksAbs, 0.0f);
-                Scribe_Values.Look<int>(ref year, "currentyear", 0);
+                    Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);
+                    Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
+                    Scribe_Deep.Look<UniqueIDsManager>(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
+                    Scribe_Deep.Look<DrugPolicyDatabase>(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
+                    Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
+                    Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
 
-                List<Pawn> savedpawns = new List<Pawn>();
-                List<Pawn> mappawns = Current.Game.CurrentMap.mapPawns.AllPawns.ToList();
-                for (int i = 0; i < mappawns.Count; i++)
-                {
-                    Pawn p = mappawns[i];
-                    if (p == null)
-                        continue;
-                    if (p.Faction != Faction.OfPlayer)
-                        continue;
-                    if (launchedpawns.Contains(p))
-                        continue;
-                    Log.Message("rpawns:" + p.Name);
-                    savedpawns.Add(p);
-                }
-                for (int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
-                {
-                    Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
-                    if (pawn == null)
+                    int year = GenDate.Year((long)Find.TickManager.TicksAbs, 0.0f);
+                    Log.Message("year:" + year);
+                    Scribe_Values.Look<int>(ref year, "currentyear", 0);
+
+                    List<Pawn> savedpawns = new List<Pawn>();
+                    List<Pawn> mappawns = Current.Game.CurrentMap.mapPawns.AllPawns.ToList();
+                    for (int i = 0; i < mappawns.Count; i++)
                     {
-                        continue;
+                        Pawn p = mappawns[i];
+                        if (p == null)
+                            continue;
+                        if (p.Faction != Faction.OfPlayer)
+                            continue;
+                        if (launchedpawns.Contains(p))
+                            continue;
+                        Log.Message("rpawns:" + p.Name);
+                        savedpawns.Add(p);
                     }
-                    Log.Message("wpn:" + pawn.Name);
-                    if (pawn.Faction == Faction.OfPlayer)
+                    for (int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
                     {
-                        Log.Message("colonistsaved:" + pawn.Name);
-                        savedpawns.Add(pawn);
-                        continue;
-                    }
-
-                    foreach (Pawn colonist in launchedpawns)
-                    {
-                        bool doo = false;
-                        if (
-                        pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
-                        || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
-                        || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                        Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
+                        if (pawn == null)
                         {
-                            doo = true;
+                            continue;
                         }
-                        if (pawn.relations.FamilyByBlood.Contains(colonist))
+                        Log.Message("wpn:" + pawn.Name);
+                        if (pawn.Faction == Faction.OfPlayer)
                         {
-                            doo = true;
-                        }
-                        if (doo)
-                        {
-                            pawn.SetFaction(Faction.OfPlayer);
-                            Log.Message("relativeof:" + colonist.Name);
+                            Log.Message("colonistsaved:" + pawn.Name);
                             savedpawns.Add(pawn);
-                            break;
+                            continue;
+                        }
+
+                        foreach (Pawn colonist in launchedpawns)
+                        {
+                            bool doo = false;
+                            if (
+                            pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                            {
+                                doo = true;
+                            }
+                            if (pawn.relations.FamilyByBlood.Contains(colonist))
+                            {
+                                doo = true;
+                            }
+                            if (doo)
+                            {
+                                pawn.SetFaction(Faction.OfPlayer);
+                                Log.Message("relativeof:" + colonist.Name);
+                                savedpawns.Add(pawn);
+                                break;
+                            }
                         }
                     }
-                }
 
-                Log.Message("Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count:" + Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count());
+                    Log.Message("Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count:" + Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count());
 
-                Scribe_Collections.Look<Pawn>(ref savedpawns, "oldpawns", LookMode.Deep);
+                    Scribe_Collections.Look<Pawn>(ref savedpawns, "oldpawns", LookMode.Deep);
 
-            }));
+                }));
+            }catch(Exception e)
+            {
+                Log.Error(e.Message);
+            }
 
         }
                
@@ -210,8 +224,7 @@ namespace saveourship
                         building_CryptosleepCasket.ContainedThing
                     });
                 }
-                building.Destroy(DestroyMode.Vanish);
-                Log.Message("111");
+                Log.Message("saved building");
             }
             string victoryText = "GameOverShipLaunched".Translate(stringBuilder.ToString(), GameVictoryUtility.PawnsLeftBehind());
             GameVictoryUtility.ShowCredits(victoryText);
@@ -219,48 +232,49 @@ namespace saveourship
 
             try
             {
+                List<Building> listcopy = new List<Building>(list);
 
-                saveShip(list);
+                saveShip(listcopy);
             }
             catch (Exception e)
             {
                 Log.Error(e.Message);
             }
 
-        }
+            foreach (Building building in list)
+            {
+                building.Destroy(DestroyMode.Vanish);
             }
+
+            }
+    }
        
     public class ScenLand : ScenPart
     {
 
         public bool saveresearch = true;
         public bool saveworldpawns = true;
-        public bool canGenerateship = false;
 
         public string shipFactionName;
         public override void PostMapGenerate(Map map)
         {
-            if (canGenerateship)
-            {
-
-                if (map.gameConditionManager.ownerMap.IsPlayerHome && !map.gameConditionManager.ownerMap.IsTempIncidentMap)
-                {
-                    loadShip(map);
-                }
-                canGenerateship = false;
-            }
-
-
+            
         }
 
         public override void GenerateIntoMap(Map map)
         {
+            if (map.gameConditionManager.ownerMap.IsPlayerHome && !map.gameConditionManager.ownerMap.IsTempIncidentMap)
+            {
+                loadShip(map);
+            }
+
         }
         public override void PostWorldGenerate()
         {
-            canGenerateship = true;
             Find.GameInitData.startingPawnCount = 0;   
         }
+
+
 
         private void Handler(Exception e) => Log.Error("Error during landing: " + e.Message);
 
@@ -276,31 +290,25 @@ namespace saveourship
 
           //  Find.GameInitData.startedFromEntry = false;
             Scribe.loader.InitLoading(file);
-            
-            Scribe_Defs.Look(ref Faction.OfPlayer.def, "playerFactionDef");
-            string actualFactionName = Faction.OfPlayer.Name;
-            //shipFactionName = actualFactionName;
+           
 
             Scribe_Deep.Look(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
             Scribe_Deep.Look(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
             Scribe_Deep.Look(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
 
-
             int currentyear = 0; 
-            Scribe_Values.Look<int>(ref currentyear, "currentyear", 0);
+            Scribe_Values.Look<int>(ref currentyear, "currentyear", 0);            
             
             if (currentyear != 0)
             {
+                currentyear -= 5500;
+                currentyear += 2;
                 if (currentyear <= int.MaxValue - 3600000)
-                {
-                    Scribe_Values.Look<int>(ref currentyear, "gameStartAbsTick", 0, false);
-
-
-                    currentyear -= 5500;
-                    currentyear += 20;
+                {                                
                     Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + currentyear * 3600000);
                 }
             }
+            
 
             Log.Message("techsave:" + Saveourships_settings.save_tech);
             if (Saveourships_settings.save_tech)
@@ -386,51 +394,72 @@ namespace saveourship
                         
             foreach(Pawn pawn in oldpawns)
             {
-                Log.Message("wpawn:" + pawn.Name);
+                Log.Message("found world pawn:" + pawn.Name);
                 pawn.SetFaction(Faction.OfAncients);
                 pawn.health.SetDead();
                 Current.Game.World.worldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
             }
             
-            Log.Message("setting terrain");
+            Log.Message("setting terrain");            
             // set terrain and remove walls etc
-            shipcoordmax += new IntVec3(3, 0, 3);
-            shipcoordmin -= new IntVec3(3, 0, 3);
-            for (int i = shipcoordmin.x; i < shipcoordmax.x; i++)
+            try
             {
-                for(int z = shipcoordmin.z; z < shipcoordmax.z; z++)
+                shipcoordmax += new IntVec3(3, 0, 3);
+                shipcoordmin -= new IntVec3(3, 0, 3);
+                for (int i = shipcoordmin.x; i < shipcoordmax.x; i++)
                 {
-                    IntVec3 point = new IntVec3(i, 0, z);
-                    int cellindex = map.cellIndices.CellToIndex(point);
-                    List<Thing> t = map.thingGrid.ThingsAt(point).ToList();
-                    foreach (Thing thing in t)
+                    for (int z = shipcoordmin.z; z < shipcoordmax.z; z++)
                     {
-                        thing.Destroy();
+                        IntVec3 point = new IntVec3(i, 0, z);
+                        int cellindex = map.cellIndices.CellToIndex(point);
+                        List<Thing> t = map.thingGrid.ThingsAt(point).ToList();
+                        foreach (Thing thing in t)
+                        {
+                            thing.Destroy();
+                        }
+                        map.terrainGrid.SetTerrain(point, TerrainDefOf.Gravel);
                     }
-                    map.terrainGrid.SetTerrain(point, TerrainDefOf.Gravel);
-                    map.fogGrid.Unfog(point);
                 }
-            }
+            }catch(Exception e)
+            {
+                Log.Error(e.Message);
+            }            
             Log.Message("fixing fog");
             // fix fog
-            shipcoordmax += new IntVec3(1, 0, 1);
-            shipcoordmin -= new IntVec3(1, 0, 1);
-            for (int i = shipcoordmin.x; i < shipcoordmax.x; i++)
+            try
             {
-                for (int z = shipcoordmin.z; z < shipcoordmax.z; z++)
+                shipcoordmax += new IntVec3(1, 0, 1);
+                shipcoordmin -= new IntVec3(1, 0, 1);
+                for (int i = shipcoordmin.x; i < shipcoordmax.x; i++)
                 {
-                    IntVec3 point = new IntVec3(i, 0, z);
-                    map.fogGrid.Unfog(point);
-                    map.roofGrid.SetRoof(point, null);
+                    for (int z = shipcoordmin.z; z < shipcoordmax.z; z++)
+                    {
+                        IntVec3 point = new IntVec3(i, 0, z);
+                        bool v = map.fogGrid.IsFogged(point);
+                        if (v)
+                        {
+                            map.fogGrid.Unfog(point);
+                        }                        
+                        map.roofGrid.SetRoof(point, null);
+                    }
                 }
+            }catch(Exception e)
+            {
+                Log.Error(e.Message);
             }
             // add ship to map
-            new ThingMutator<Building>()
-                .For<Building>(x => x.SpawnSetup(map, false))
-                .SetAsHome<Building>()
-                .UnsafeExecute(ship, Handler);
-            
-            Log.Message("finalizing");
+            Log.Message("loading ship building");
+            try
+            {
+                new ThingMutator<Building>()
+                    .For<Building>(x => x.SpawnSetup(map, false))
+                    .SetAsHome<Building>()
+                    .UnsafeExecute(ship, Handler);
+            }catch(Exception e)
+            {
+                Log.Message(e.Message);
+            }
+
             Log.Message("Loading ship complete");
         }
 
@@ -482,7 +511,72 @@ namespace saveourship
         
 
     }
+
+    public class Building_CustomShipComputerCore : Building_ShipComputerCore
+    {
+
+        public string outputname = "Ship Name";
+
+        public override void SpawnSetup(Map map, bool respawningAfterLoad)
+        {
+            base.SpawnSetup(map, respawningAfterLoad);
+            outputname = Faction.OfPlayer.Name;
+        }
+
+        // Token: 0x17000569 RID: 1385
+        // (get) Token: 0x0600245A RID: 9306 RVA: 0x00114E11 File Offset: 0x00113211
+      
+        public class Dialog_Rename_Ship : Dialog_Rename
+        {
+
+            public Dialog_Rename_Ship(Building_CustomShipComputerCore core)
+            {
+                this.shipcore = core;
+                this.curName = core.outputname;
+            }
+
+            public override Vector2 InitialSize
+            {
+                get
+                {
+                    return new Vector2(500f, 175f);
+                }
+            }
+
+            protected override void SetName(string name)
+            {
+                this.shipcore.outputname = this.curName;
+            }
+            Building_CustomShipComputerCore shipcore;
+        }
+
+        public void Rename()
+        {
+            Find.WindowStack.Add(new Dialog_Rename_Ship(this));
+
+        }
+
+        // Token: 0x0600245B RID: 9307 RVA: 0x00114E24 File Offset: 0x00113224
+        public override IEnumerable<Gizmo> GetGizmos()
+        {
+            foreach (Gizmo c in base.GetGizmos())
+            {
+                yield return c;
+            }
+            
+            Command_Action rename = new Command_Action();
+            rename.defaultLabel = "Rename";
+            rename.icon = ContentFinder<Texture2D>.Get("UI/Buttons/Rename", true);
+            rename.defaultDesc = outputname;
+            rename.action = new Action(this.Rename);
+            yield return rename;
+            
+            yield break;
+        }
         
+    }
+
+
 }
 
 
