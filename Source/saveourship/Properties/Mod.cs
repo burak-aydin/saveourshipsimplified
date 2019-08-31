@@ -103,7 +103,7 @@ namespace saveourship
                             Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
                             if (cask.HasAnyContents)
                             {
-                                Pawn pawn = cask.ContainedThing as Pawn;
+                                Pawn pawn = cask.ContainedThing as Pawn;     
                                 launchedpawns.Add(pawn);
                             }
                         }
@@ -130,6 +130,8 @@ namespace saveourship
                         Pawn p = mappawns[i];
                         if (p == null)
                             continue;
+                        if (p.Destroyed)
+                            continue;                        
                         if (p.Faction != Faction.OfPlayer)
                             continue;
                         if (launchedpawns.Contains(p))
@@ -139,50 +141,67 @@ namespace saveourship
                     }
                     for (int i = 0; i < Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count(); i++)
                     {
-                        Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
-                        if (pawn == null)
+                        try
                         {
-                            continue;
-                        }
-                        Log.Message("wpn:" + pawn.Name);
-                        if (pawn.Faction == Faction.OfPlayer)
-                        {
-                            Log.Message("colonistsaved:" + pawn.Name);
-                            savedpawns.Add(pawn);
-                            continue;
-                        }
-
-                        foreach (Pawn colonist in launchedpawns)
-                        {
-                            bool doo = false;
-                            if (
-                            pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
-                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
-                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                            Pawn pawn = Current.Game.World.worldPawns.AllPawnsAliveOrDead.ElementAt(i);
+                            if (pawn == null)
                             {
-                                doo = true;
+                                continue;
                             }
-                            if (pawn.relations.FamilyByBlood.Contains(colonist))
+                            if (pawn.Destroyed)
                             {
-                                doo = true;
+                                continue;
                             }
-                            if (doo)
+                            Log.Message("world pawn:" + pawn.Name);
+                            if (pawn.Faction == Faction.OfPlayer)
                             {
-                                pawn.SetFaction(Faction.OfPlayer);
-                                Log.Message("relativeof:" + colonist.Name);
+                                Log.Message("colonistsaved:" + pawn.Name);
                                 savedpawns.Add(pawn);
-                                break;
+                                continue;
                             }
+
+                            foreach (Pawn colonist in launchedpawns)
+                            {
+                                bool doo = false;
+                                if (
+                                pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
+                                || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
+                                || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                                {
+                                    doo = true;
+                                }
+                                if (pawn.relations.FamilyByBlood.Contains(colonist))
+                                {
+                                    doo = true;
+                                }
+                                if (doo)
+                                {
+                                    Log.Message("relativeof:" + colonist.Name);
+                                    pawn.SetFaction(Current.Game.World.factionManager.OfPlayer);
+                                    savedpawns.Add(pawn);
+                                    break;
+                                }
+                            }
+
+
+                        }catch(Exception e)
+                        {
+                            Log.Message("ERROR AT THIS PAWN");
+                            Log.Message(e.Message);
                         }
                     }
-
+                    Log.Message("Finishing");
                     Log.Message("Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count:" + Current.Game.World.worldPawns.AllPawnsAliveOrDead.Count());
 
+                    Log.Message("savedpawns saving");
                     Scribe_Collections.Look<Pawn>(ref savedpawns, "oldpawns", LookMode.Deep);
+                    Log.Message("savedpawns saved successfully");
+
 
                 }));
             }catch(Exception e)
             {
+                Log.Error("Error while saving ship");
                 Log.Error(e.Message);
             }
 
@@ -241,6 +260,9 @@ namespace saveourship
                 Log.Error(e.Message);
             }
 
+
+
+
             foreach (Building building in list)
             {
                 building.Destroy(DestroyMode.Vanish);
@@ -254,24 +276,40 @@ namespace saveourship
 
         public bool saveresearch = true;
         public bool saveworldpawns = true;
+        public bool load_first = false;
+
 
         public string shipFactionName;
         public override void PostMapGenerate(Map map)
         {
-            
         }
 
         public override void GenerateIntoMap(Map map)
         {
-            if (map.gameConditionManager.ownerMap.IsPlayerHome && !map.gameConditionManager.ownerMap.IsTempIncidentMap)
+
+            // save                     Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
+            
+            if (load_first)
             {
-                loadShip(map);
+                if (map.gameConditionManager.ownerMap.IsPlayerHome && !map.gameConditionManager.ownerMap.IsTempIncidentMap)
+                {
+                    loadShip(map);
+                }
+                load_first = false;
+                Scribe_Values.Look<bool>(ref load_first, "saveourship_game_start", false, true);
             }
+
+
+
+
+
 
         }
         public override void PostWorldGenerate()
         {
-            Find.GameInitData.startingPawnCount = 0;   
+            Find.GameInitData.startingPawnCount = 0;
+            load_first = true;
+            Scribe_Values.Look<bool>(ref load_first, "saveourship_game_start", false, true);
         }
 
 
@@ -473,6 +511,8 @@ namespace saveourship
         {
             base.ExposeData();
             Scribe_Values.Look<string>(ref shipFactionName, "shipFactionName", null, false);
+            Scribe_Values.Look<bool>(ref load_first, "saveourship_game_start", false, true);
+
         }
 
         public override void DoEditInterface(Listing_ScenEdit listing)
