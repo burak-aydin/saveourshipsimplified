@@ -5,7 +5,7 @@ This is saveourshipsimplifed mod by Ryder
 https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 
-V1.0
+V1.1
 Save Our Ship Basic
 
 A simple mod that just saves your ship and be able to transfer your colonists and stuff to another map.
