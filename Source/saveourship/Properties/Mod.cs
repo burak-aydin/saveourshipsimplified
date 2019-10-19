@@ -67,21 +67,39 @@ namespace saveourship
         private static List<String> saveShip(List<Building> list,List<String> errors) 
         {
             Log.Message("SAVE SHIP STARTED");
-            string saved_name = "def";
-            foreach (Building building in list)
-            {                
-                if (building.def == ThingDefOf.Ship_ComputerCore)
+            string saved_name = "ship_file_name";
+            try
+            {
+                foreach (Building building in list)
                 {
-                    Building_CustomShipComputerCore core = building as Building_CustomShipComputerCore;
-                    saved_name = core.outputname;
+                    if (building.def == ThingDefOf.Ship_ComputerCore)
+                    {
+                        Log.Message("getting ship name");
+                        Building_CustomShipComputerCore core = building as Building_CustomShipComputerCore;
+                        saved_name = core.outputname;
+                        Log.Message("ship name : " + saved_name);
+                    }
                 }
+            }catch(Exception e)
+            {
+                Log.Message("CUSTOM_SHIP_COMPUTER_CORE is not valid");
+                errors.Add("CUSTOM_SHIP_COMPUTER_CORE is not valid");
+                Log.Message(e.Message);
             }
-                                 
+            
+            if(saved_name == "")
+            {
+                saved_name = "ship_file_name";
+            }
+
             string str1 = Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships");
             str1.Replace('/', '\\');
+            Log.Message("checking if folder exists : "+ str1);
             if (!System.IO.Directory.Exists(str1))
             {
+                Log.Message("creating folder : " + str1);
                 System.IO.Directory.CreateDirectory(str1);
+                Log.Message("folder created successfully");
             }
 
             int num = 0;
@@ -98,6 +116,7 @@ namespace saveourship
            
             SafeSaver.Save(str2, "RWShip", (Action)(() =>
             {
+                Log.Message("safesaver");
                 ScribeMetaHeaderUtility.WriteMetaHeader();
 
 
