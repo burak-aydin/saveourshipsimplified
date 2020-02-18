@@ -6,18 +6,24 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 
 V1.2
-Save Our Ship Basic
+Save Our Ship Simplified
 
 A simple mod that just saves your ship and be able to transfer your colonists and stuff to another map.
-Ships doesnt have insides so if you want that check out saveourship reloaded.
+Ships doesnt have insides so if you want that check out saveourship reloaded or sos2.
 
-I know Save Our Ship Reloaded exists but it has performance issues and so i created this.
-Also this is my first mod. Save compatible for both adding and removing
+This is my first mod. Save compatible for both adding and removing.
 
-There are sometimes errors when loading game if you could find the cause i would be very happy :D
-You should contribute
+Also check out
 
-Also check out https://steamcommunity.com/sharedfiles/filedetails/?id=1541262111
+original
+Save our ship
+https://steamcommunity.com/sharedfiles/filedetails/?id=1139655706
+by Kentington
+
+Save our ship reloaded
+https://steamcommunity.com/sharedfiles/filedetails/?id=1541262111
 by pipakin
-and original https://steamcommunity.com/sharedfiles/filedetails/?id=1139655706
+
+Save our ship 2
+https://steamcommunity.com/sharedfiles/filedetails/?id=1909914131
 by Kentington
