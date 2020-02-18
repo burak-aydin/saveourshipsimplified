@@ -1,7 +1,7 @@
 # saveourshipsimplified
 saveourshipsimplified
 
-This is saveourshipsimplifed mod by Ryder
+This is the saveourshipsimplifed mod
 https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 
