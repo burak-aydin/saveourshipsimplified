@@ -10,18 +10,59 @@ using RimWorld;
 using Verse;
 using RimWorld.Planet;
 using System.IO;
+using HarmonyLib;
+
 
 namespace saveourship
 {
+    /*
+    [StaticConstructorOnStartup]
+    internal static class HarmonyPatches
+    {
+        static HarmonyPatches()
+        {
+            Log.Message("Patching Madeline.ModMismatchWindow");
+            Harmony HMInstance = new Harmony("Madeline.ModMismatchWindowPatch");
+            MethodInfo original = AccessTools.Method(typeof(ScribeMetaHeaderUtility), "TryCreateDialogsForVersionMismatchWarnings");
+            MethodInfo prefix = AccessTools.Method(typeof(HarmonyPatches), "Prefix_TryCreateDialogForVersionMismatchWarnings");
+            HMInstance.Patch(original, new HarmonyMethod(prefix));
 
-    
+            var SaveGameOriginal = AccessTools.Method(typeof(GameDataSaveLoader), "SaveGame");
+            var SaveGamePrefix = AccessTools.Method(typeof(HarmonyPatches), "Prefix_SaveGame");
+            HMInstance.Patch(SaveGameOriginal, new HarmonyMethod(SaveGamePrefix));
+
+            var CheckVersionAndLoadOriginal = AccessTools.Method(typeof(PreLoadUtility), "CheckVersionAndLoad");
+            var CheckVersionAndLoadPrefix = AccessTools.Method(typeof(MetaHeaderUtility), "UpdateLastAccessedSaveFileInLoadSelection");
+            HMInstance.Patch(CheckVersionAndLoadOriginal, new HarmonyMethod(CheckVersionAndLoadPrefix));
+        }
+    }
+    */
+
+
     public class saveourship : Mod
     {
+        
         public static Saveourships_settings settings;
 
         public saveourship(ModContentPack content) : base(content)
         {
             settings = GetSettings<Saveourships_settings>();
+
+
+            Harmony HMInstance = new Harmony("SOS SIMPLIFIED");
+
+#if DEBUG
+            Harmony.DEBUG = true;
+#endif
+            Log.Message("SOS SIMPLIFIED LOADED");
+
+            MethodInfo original = AccessTools.Method(typeof(ShipCountdown), "CountdownEnded");
+            MethodInfo prefix = AccessTools.Method(typeof(ShipCountdown_countdownend), "CountdownEnded");
+            HMInstance.Patch(original, new HarmonyMethod(prefix));
+
+
+
+
         }
 
         public override string SettingsCategory() => "Save Our Ship Simplified";
@@ -47,24 +88,18 @@ namespace saveourship
 
         public override void WriteSettings()
         {
-            base.WriteSettings(); 
-            
+            base.WriteSettings();             
         }
-
-
-
     }
 
 
-    [StaticConstructorOnStartup]
-    public static class MyDetours
+    [HarmonyPatch(typeof(ShipCountdown), "CountdownEnded")]
+    public class ShipCountdown_countdownend
     {
-        static MyDetours()
-        {
 
-        }
-
-        private static List<String> saveShip(List<Building> list,List<String> errors) 
+        static FieldInfo pht_root = typeof(ShipCountdown).GetField("shipRoot", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+        
+        private static List<String> saveShip(List<Building> list, List<String> errors)
         {
             Log.Message("SAVE SHIP STARTED");
             string saved_name = "ship_file_name";
@@ -80,21 +115,22 @@ namespace saveourship
                         Log.Message("ship name : " + saved_name);
                     }
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Log.Message("CUSTOM_SHIP_COMPUTER_CORE is not valid");
                 errors.Add("CUSTOM_SHIP_COMPUTER_CORE is not valid");
                 Log.Message(e.Message);
             }
-            
-            if(saved_name == "")
+
+            if (saved_name == "")
             {
                 saved_name = "ship_file_name";
             }
 
             string str1 = Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships");
             str1.Replace('/', '\\');
-            Log.Message("checking if folder exists : "+ str1);
+            Log.Message("checking if folder exists : " + str1);
             if (!System.IO.Directory.Exists(str1))
             {
                 Log.Message("creating folder : " + str1);
@@ -113,7 +149,7 @@ namespace saveourship
             }
 
             Log.Message(str2);
-           
+
             SafeSaver.Save(str2, "RWShip", (Action)(() =>
             {
                 Log.Message("safesaver");
@@ -128,7 +164,7 @@ namespace saveourship
                         Building_CryptosleepCasket cask = building as Building_CryptosleepCasket;
                         if (cask.HasAnyContents)
                         {
-                            Pawn pawn = cask.ContainedThing as Pawn;     
+                            Pawn pawn = cask.ContainedThing as Pawn;
                             launchedpawns.Add(pawn);
                         }
                     }
@@ -156,7 +192,7 @@ namespace saveourship
                     if (p == null)
                         continue;
                     if (p.Destroyed)
-                        continue;                        
+                        continue;
                     if (p.Faction != Faction.OfPlayer)
                         continue;
                     if (launchedpawns.Contains(p))
@@ -211,18 +247,19 @@ namespace saveourship
                         }
 
 
-                    }catch(Exception e)
+                    }
+                    catch (Exception e)
                     {
                         Log.Error("ERROR AT PAWN");
                         Log.Error(e.Message);
-                        errors.Add("ERROR AT PAWN");                       
+                        errors.Add("ERROR AT PAWN");
                         errors.Add(e.Message);
                         try
                         {
                             Log.Message(efpawn.Name.ToString());
                             errors.Add(efpawn.Name.ToString());
                         }
-                        catch(Exception innere)
+                        catch (Exception innere)
                         {
                             Log.Error("cannot access its name");
                             errors.Add("cannot access its name");
@@ -245,7 +282,6 @@ namespace saveourship
             return errors;
 
         }
-               
         private static void output_errors(List<String> errors, bool hard_fail)
         {
             bool debugforcecrash = Saveourships_settings.debugforce_crash;
@@ -285,47 +321,50 @@ namespace saveourship
 
         }
 
-        static FieldInfo pht_root = typeof(ShipCountdown).GetField("shipRoot", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-        public static void countdownend()
+        public static bool CountdownEnded()
         {
             Log.Message("countdownend");
             bool hard_fail = false;
             List<String> errors = new List<string>();
 
-                       
             if (pht_root == null)
             {
                 Log.Error("pht_root null");
                 errors.Add("pht_root null");
-                output_errors(errors,true);
+                output_errors(errors, true);
                 GameVictoryUtility.ShowCredits("ERROR");
-                return;
+                return false;
             }
-            Building shiproot = (Building)pht_root.GetValue(null);
+
+            Building shipRoot = (Building)pht_root.GetValue(null);
+
 
             List<Building> list = null;
             try
             {
-                list = ShipUtility.ShipBuildingsAttachedTo(shiproot).ToList<Building>();
+                list = ShipUtility.ShipBuildingsAttachedTo(shipRoot).ToList<Building>();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-               
+
                 Log.Error(e.Message);
                 errors.Add(e.Message);
-                output_errors(errors,true);
+                output_errors(errors, true);
                 GameVictoryUtility.ShowCredits("ERROR");
-                return;
+                return false;
             }
 
             if (list.Count == 0)
             {
                 Log.Error("list null");
                 errors.Add("list null");
-            }          
+                GameVictoryUtility.ShowCredits("ERROR");
+                return false;
+            }
 
+            Log.Message("creating ending message");
 
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new StringBuilder();                       
             foreach (Building building in list)
             {
                 try
@@ -339,34 +378,27 @@ namespace saveourship
                         {
                         building_CryptosleepCasket.ContainedThing
                         });
-                        Log.Message("saved building_CryptosleepCasket content :" + building_CryptosleepCasket.ContainedThing.Label);
                     }
-                    else
-                    {
-                        Log.Message("building :" + building.Label);
-                        
-                    }
-                    
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Log.Error("error for a building in the list");
                     Log.Error(e.Message);
                     errors.Add("error for a building in the list");
                     errors.Add(e.Message);
                 }
-                
+
             }
+                       
             Log.Message("credits_0");
-            string victoryText = "GameOverShipLaunched".Translate(stringBuilder.ToString(), GameVictoryUtility.PawnsLeftBehind());
-            GameVictoryUtility.ShowCredits(victoryText);
+            GameVictoryUtility.ShowCredits(GameVictoryUtility.MakeEndCredits("GameOverShipLaunchedIntro".Translate(), "GameOverShipLaunchedEnding".Translate(), stringBuilder.ToString()));
             Log.Message("credits_1");
 
             try
             {
                 List<Building> listcopy = new List<Building>(list);
 
-                errors = saveShip(listcopy,errors);
+                errors = saveShip(listcopy, errors);
             }
             catch (Exception e)
             {
@@ -377,17 +409,19 @@ namespace saveourship
                 Log.Error(e.Message);
             }
 
-                       
+
             foreach (Building building in list)
             {
                 building.Destroy(DestroyMode.Vanish);
             }
 
             output_errors(errors, hard_fail);
+            return false;
 
-            }
+        }
+
     }
-       
+                
     public class ScenLand : ScenPart
     {
 

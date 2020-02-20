@@ -11,9 +11,6 @@ using UnityEngine;
 
 namespace saveourship
 {
-
-
-
     public class Saveourships_settings : ModSettings
     {        
         public static bool load_tech = true;
