@@ -1,11 +1,11 @@
 # saveourshipsimplified
 saveourshipsimplified
 
-This is the saveourshipsimplifed mod for Rimworld 1.0
+This is the saveourshipsimplifed mod for Rimworld 1.0/1.1
 https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 
-V1.2
+V1.3
 Save Our Ship Simplified
 
 A simple mod that just saves your ship and be able to transfer your colonists and stuff to another map.
