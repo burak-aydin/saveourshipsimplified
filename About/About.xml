@@ -10,4 +10,8 @@
 	<description>
 		Save Our Ship Simplified for 1.0/1.1
 	</description>
+	<loadAfter>
+		<li>Ludeon.RimWorld</li>
+		<li>Ludeon.RimWorld.Royalty</li>
+	</loadAfter>
 </ModMetaData>
