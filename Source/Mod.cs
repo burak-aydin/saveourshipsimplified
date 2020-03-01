@@ -15,30 +15,7 @@ using HarmonyLib;
 
 namespace saveourship
 {
-    /*
-    [StaticConstructorOnStartup]
-    internal static class HarmonyPatches
-    {
-        static HarmonyPatches()
-        {
-            Log.Message("Patching Madeline.ModMismatchWindow");
-            Harmony HMInstance = new Harmony("Madeline.ModMismatchWindowPatch");
-            MethodInfo original = AccessTools.Method(typeof(ScribeMetaHeaderUtility), "TryCreateDialogsForVersionMismatchWarnings");
-            MethodInfo prefix = AccessTools.Method(typeof(HarmonyPatches), "Prefix_TryCreateDialogForVersionMismatchWarnings");
-            HMInstance.Patch(original, new HarmonyMethod(prefix));
-
-            var SaveGameOriginal = AccessTools.Method(typeof(GameDataSaveLoader), "SaveGame");
-            var SaveGamePrefix = AccessTools.Method(typeof(HarmonyPatches), "Prefix_SaveGame");
-            HMInstance.Patch(SaveGameOriginal, new HarmonyMethod(SaveGamePrefix));
-
-            var CheckVersionAndLoadOriginal = AccessTools.Method(typeof(PreLoadUtility), "CheckVersionAndLoad");
-            var CheckVersionAndLoadPrefix = AccessTools.Method(typeof(MetaHeaderUtility), "UpdateLastAccessedSaveFileInLoadSelection");
-            HMInstance.Patch(CheckVersionAndLoadOriginal, new HarmonyMethod(CheckVersionAndLoadPrefix));
-        }
-    }
-    */
-
-
+   
     public class saveourship : Mod
     {
         
@@ -49,19 +26,16 @@ namespace saveourship
             settings = GetSettings<Saveourships_settings>();
 
 
-            Harmony HMInstance = new Harmony("SOS SIMPLIFIED");
+            Harmony HMInstance = new Harmony("SOS_SIMPLIFIED");
 
 #if DEBUG
             Harmony.DEBUG = true;
 #endif
-            Log.Message("SOS SIMPLIFIED LOADED");
+            Log.Message("Save our ship simplified loaded");
 
             MethodInfo original = AccessTools.Method(typeof(ShipCountdown), "CountdownEnded");
             MethodInfo prefix = AccessTools.Method(typeof(ShipCountdown_countdownend), "CountdownEnded");
             HMInstance.Patch(original, new HarmonyMethod(prefix));
-
-
-
 
         }
 
@@ -78,7 +52,7 @@ namespace saveourship
                 listing_Standard.CheckboxLabeled("Save drug policies", ref Saveourships_settings.load_drug_policies);
                 listing_Standard.TextEntry("Make sure to disable \"save drug policies\" if you remove a mod that adds drugs between games");
 
-                listing_Standard.CheckboxLabeled("DEBUG_FORCE_CRASH", ref Saveourships_settings.debugforce_crash);
+    //          listing_Standard.CheckboxLabeled("DEBUG_FORCE_CRASH", ref Saveourships_settings.debugforce_crash);
                 
 
                 listing_Standard.End();
@@ -221,7 +195,7 @@ namespace saveourship
                             Log.Message("colonistsaved:" + pawn.Name);
                             savedpawns.Add(pawn);
                             continue;
-                        }
+                        }                        
 
                         foreach (Pawn colonist in launchedpawns)
                         {
@@ -229,7 +203,11 @@ namespace saveourship
                             if (
                             pawn.relations.DirectRelationExists(PawnRelationDefOf.Bond, colonist)
                             || pawn.relations.DirectRelationExists(PawnRelationDefOf.Lover, colonist)
-                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist))
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Parent, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Child, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.ExSpouse, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, colonist)
+                            || pawn.relations.DirectRelationExists(PawnRelationDefOf.Fiance, colonist))
                             {
                                 doo = true;
                             }
@@ -343,6 +321,11 @@ namespace saveourship
             try
             {
                 list = ShipUtility.ShipBuildingsAttachedTo(shipRoot).ToList<Building>();
+
+                if (list.Count == 0)
+                {
+                    throw new Exception("LIST_EMPTY");
+                }
             }
             catch (Exception e)
             {
@@ -354,13 +337,7 @@ namespace saveourship
                 return false;
             }
 
-            if (list.Count == 0)
-            {
-                Log.Error("list null");
-                errors.Add("list null");
-                GameVictoryUtility.ShowCredits("ERROR");
-                return false;
-            }
+            
 
             Log.Message("creating ending message");
 

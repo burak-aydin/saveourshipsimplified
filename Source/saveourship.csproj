@@ -41,6 +41,7 @@
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.0.7, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Lib.Harmony.2.0.0.7\lib\net472\0Harmony.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
@@ -70,6 +71,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>rmdir /s /q "..\..\Source\obj"</PostBuildEvent>
+    <PostBuildEvent>rmdir /s /q "..\..\Source\obj"
+date /t &gt;&gt; ..\..\VERSION
+time /t &gt;&gt; ..\..\VERSION</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>if exist "..\..\VERSION" del /q  "..\..\VERSION"</PreBuildEvent>
   </PropertyGroup>
 </Project>
