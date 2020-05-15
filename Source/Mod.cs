@@ -154,7 +154,8 @@ namespace saveourship
                 Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
                 Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
 
-                int year = GenDate.Year((long)Find.TickManager.TicksAbs, 0.0f);
+                int year = GenDate.YearsPassed;
+                //Getting year only, not offset of year
                 Log.Message("year:" + year);
                 Scribe_Values.Look<int>(ref year, "currentyear", 0);
 
@@ -462,7 +463,7 @@ namespace saveourship
             
             if (currentyear != 0)
             {
-                currentyear -= 5500;
+                //currentyear -= 5500; (Yoink, don't need that anymore)
                 currentyear += 2;
                 if (currentyear <= int.MaxValue - 3600000)
                 {                                
