@@ -72,7 +72,7 @@ namespace saveourship
     {
 
         static FieldInfo pht_root = typeof(ShipCountdown).GetField("shipRoot", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-        
+
         private static List<String> saveShip(List<Building> list, List<String> errors)
         {
             Log.Message("SAVE SHIP STARTED");
@@ -147,14 +147,16 @@ namespace saveourship
                 //start saving
                 Scribe_Collections.Look<Building>(ref list, "buildings", LookMode.Deep);
 
-                Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);
-                Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
+                Scribe_Deep.Look<ResearchManager>(ref Current.Game.researchManager, false, "researchManager", new object[0]);                
                 Scribe_Deep.Look<UniqueIDsManager>(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
                 Scribe_Deep.Look<DrugPolicyDatabase>(ref Current.Game.drugPolicyDatabase, false, "drugPolicyDatabase", new object[0]);
                 Scribe_Deep.Look<OutfitDatabase>(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
-                Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
+                Scribe_Deep.Look<IdeoManager>(ref Current.Game.World.ideoManager, false, "ideo", new object[0]);
+            //    Scribe_Deep.Look<TaleManager>(ref Current.Game.taleManager, false, "taleManager", new object[0]);
+            //    Scribe_Deep.Look<PlayLog>(ref Current.Game.playLog, false, "playLog", new object[0]);
 
-                int year = GenDate.Year((long)Find.TickManager.TicksAbs, 0.0f);
+
+                int year = GenDate.YearsPassed;
                 Log.Message("year:" + year);
                 Scribe_Values.Look<int>(ref year, "currentyear", 0);
 
@@ -264,135 +266,136 @@ namespace saveourship
         {
             bool debugforcecrash = Saveourships_settings.debugforce_crash;
 
+            String dialogtext = "";
             //output errors if any
-            if (errors.Count != 0 || debugforcecrash)
+            if (errors.Count != 0)
             {
-
-                Dialog_MessageBox dialog = new Dialog_MessageBox("");
-                if (hard_fail || debugforcecrash)
+                //Root level exception in Update(): System.MissingMethodException: void Verse.Dialog_MessageBox..ctor
+                //(Verse.TaggedString,string,System.Action,string,System.Action,string,bool,System.Action,System.Action)
+                
+                if (hard_fail)
                 {
-                    dialog.text += "SAVE IS NOT SUCCESSFUL\nSave our ship encountered an MAJOR ERROR and the ship file doesnt saved.\nPlease get in touch with the developer\nErrors:\n";
-                    if (debugforcecrash)
-                    {
-                        for (int i = 0; i < 100; i++)
-                        {
-                            errors.Add("DUMMY_ERROR_" + i);
-                        }
-                    }
+                    dialogtext += "SAVE IS NOT SUCCESSFUL\nSave our ship encountered an MAJOR ERROR and the ship file doesnt saved.\nPlease get in touch with the developer\nErrors:\n";
                 }
                 else
                 {
-                    dialog.text += "SAVE IS SUCCESSFUL but save our ship encountered minor errors\nMore information:\n";
+                    dialogtext += "SAVE IS SUCCESSFUL but save our ship encountered minor errors\nMore information:\n";
                 }
                 foreach (string error in errors)
                 {
-                    dialog.text += error + "\n";
+                    dialogtext += error + "\n";
                 }
-                Find.WindowStack.Add(dialog);
+                
             }
             else
             {
-                Dialog_MessageBox dialog = new Dialog_MessageBox("");
-                dialog.text = "Ship file saved successfully";
-                Find.WindowStack.Add(dialog);
+                dialogtext += "Ship file saved successfully";                
             }
 
+            Dialog_MessageBox dialog = new Dialog_MessageBox(dialogtext);
+            Find.WindowStack.Add(dialog);
         }
 
         public static bool CountdownEnded()
         {
-            Log.Message("countdownend");
+            Log.Message("CountdownEnded");
             bool hard_fail = false;
             List<String> errors = new List<string>();
 
-            if (pht_root == null)
+            if (pht_root != null)
+            {
+                Building shipRoot = (Building)pht_root.GetValue(null);
+
+                List<Building> list = null;
+                try
+                {
+                    list = ShipUtility.ShipBuildingsAttachedTo(shipRoot).ToList<Building>();
+
+                    if (list.Count == 0)
+                    {
+                        throw new Exception("LIST_EMPTY");
+                    }
+                }
+                catch (Exception e)
+                {
+
+                    Log.Error(e.Message);
+                    errors.Add(e.Message);
+                    output_errors(errors, true);
+                    GameVictoryUtility.ShowCredits("ERROR");
+                    return false;
+                }
+
+
+
+                Log.Message("creating ending message");
+
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (Building building in list)
+                {
+                    try
+                    {
+                        Building_CryptosleepCasket building_CryptosleepCasket = building as Building_CryptosleepCasket;
+                        if (building_CryptosleepCasket != null && building_CryptosleepCasket.HasAnyContents)
+                        {
+                            stringBuilder.AppendLine("   " + building_CryptosleepCasket.ContainedThing.LabelCap);
+                            Find.StoryWatcher.statsRecord.colonistsLaunched++;
+                            TaleRecorder.RecordTale(TaleDefOf.LaunchedShip, new object[]
+                            {
+                        building_CryptosleepCasket.ContainedThing
+                            });
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error("error for a building in the list");
+                        Log.Error(e.Message);
+                        errors.Add("error for a building in the list");
+                        errors.Add(e.Message);
+                    }
+
+                }
+
+                Log.Message("ShowCreditsb");
+                GameVictoryUtility.ShowCredits(GameVictoryUtility.MakeEndCredits("GameOverShipLaunchedIntro".Translate(), "GameOverShipLaunchedEnding".Translate(), stringBuilder.ToString()));
+                Log.Message("ShowCreditsa");
+
+                try
+                {
+                    List<Building> listcopy = new List<Building>(list);
+
+                    errors = saveShip(listcopy, errors);
+                }
+                catch (Exception e)
+                {
+                    hard_fail = true;
+                    Log.Message("error while saving");
+                    errors.Add("error while saving");
+                    errors.Add(e.Message);
+                    Log.Error(e.Message);
+                }
+
+
+                foreach (Building building in list)
+                {
+                    building.Destroy(DestroyMode.Vanish);
+                }
+
+                output_errors(errors, hard_fail);
+                return false;
+
+            }
+            else
             {
                 Log.Error("pht_root null");
                 errors.Add("pht_root null");
                 output_errors(errors, true);
                 GameVictoryUtility.ShowCredits("ERROR");
-                return false;
-            }
-
-            Building shipRoot = (Building)pht_root.GetValue(null);
-
-
-            List<Building> list = null;
-            try
-            {
-                list = ShipUtility.ShipBuildingsAttachedTo(shipRoot).ToList<Building>();
-
-                if (list.Count == 0)
-                {
-                    throw new Exception("LIST_EMPTY");
-                }
-            }
-            catch (Exception e)
-            {
-
-                Log.Error(e.Message);
-                errors.Add(e.Message);
-                output_errors(errors, true);
-                GameVictoryUtility.ShowCredits("ERROR");
-                return false;
-            }
-
-            
-
-            Log.Message("creating ending message");
-
-            StringBuilder stringBuilder = new StringBuilder();                       
-            foreach (Building building in list)
-            {
-                try
-                {
-                    Building_CryptosleepCasket building_CryptosleepCasket = building as Building_CryptosleepCasket;
-                    if (building_CryptosleepCasket != null && building_CryptosleepCasket.HasAnyContents)
-                    {
-                        stringBuilder.AppendLine("   " + building_CryptosleepCasket.ContainedThing.LabelCap);
-                        Find.StoryWatcher.statsRecord.colonistsLaunched++;
-                        TaleRecorder.RecordTale(TaleDefOf.LaunchedShip, new object[]
-                        {
-                        building_CryptosleepCasket.ContainedThing
-                        });
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error("error for a building in the list");
-                    Log.Error(e.Message);
-                    errors.Add("error for a building in the list");
-                    errors.Add(e.Message);
-                }
-
-            }
-                       
-            Log.Message("credits_0");
-            GameVictoryUtility.ShowCredits(GameVictoryUtility.MakeEndCredits("GameOverShipLaunchedIntro".Translate(), "GameOverShipLaunchedEnding".Translate(), stringBuilder.ToString()));
-            Log.Message("credits_1");
-
-            try
-            {
-                List<Building> listcopy = new List<Building>(list);
-
-                errors = saveShip(listcopy, errors);
-            }
-            catch (Exception e)
-            {
-                hard_fail = true;
-                Log.Message("error while saving");
-                errors.Add("error while saving");
-                errors.Add(e.Message);
-                Log.Error(e.Message);
             }
 
 
-            foreach (Building building in list)
-            {
-                building.Destroy(DestroyMode.Vanish);
-            }
+            GameVictoryUtility.ShowCredits(GameVictoryUtility.MakeEndCredits("GameOverShipLaunchedIntro".Translate(), "GameOverShipLaunchedEnding".Translate(), null, "GameOverColonistsEscaped", null), null, false, 5f);
 
-            output_errors(errors, hard_fail);
             return false;
 
         }
@@ -456,13 +459,16 @@ namespace saveourship
 
             Scribe_Deep.Look(ref Current.Game.uniqueIDsManager, false, "uniqueIDsManager", new object[0]);
             Scribe_Deep.Look(ref Current.Game.outfitDatabase, false, "outfitDatabase", new object[0]);
+            Scribe_Deep.Look(ref Current.Game.World.ideoManager, false, "ideo", new object[0]);
+
+            List<Ideo> ideosListForReading = Find.IdeoManager.IdeosListForReading;
+            
 
             int currentyear = 0; 
             Scribe_Values.Look<int>(ref currentyear, "currentyear", 0);            
             
             if (currentyear != 0)
-            {
-                currentyear -= 5500;
+            { 
                 currentyear += 2;
                 if (currentyear <= int.MaxValue - 3600000)
                 {                                
@@ -653,7 +659,7 @@ namespace saveourship
             foreach (string str in stringList)
             {
                 string ship = str;
-                floatMenuOptionList.Add(new FloatMenuOption(Path.GetFileNameWithoutExtension(ship), (Action)(() => this.shipFactionName = Path.GetFileNameWithoutExtension(ship)), (MenuOptionPriority)4, (Action)null, (Thing)null, 0.0f, (Func<Rect, bool>)null, (WorldObject)null));
+                floatMenuOptionList.Add(new FloatMenuOption(Path.GetFileNameWithoutExtension(ship), (Action)(() => this.shipFactionName = Path.GetFileNameWithoutExtension(ship)), (MenuOptionPriority)4, null, (Thing)null, 0.0f, (Func<Rect, bool>)null, (WorldObject)null));
             }
             Find.WindowStack.Add(new FloatMenu(floatMenuOptionList));
         }

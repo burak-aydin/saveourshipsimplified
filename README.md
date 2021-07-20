@@ -1,7 +1,7 @@
 # saveourshipsimplified
 saveourshipsimplified
 
-This is the saveourshipsimplifed mod for Rimworld 1.0/1.1
+This is the saveourshipsimplifed mod for Rimworld 1.2/1.3
 https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 Save Our Ship Simplified
