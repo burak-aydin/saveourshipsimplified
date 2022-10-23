@@ -427,21 +427,24 @@ namespace saveourship
                     loadShip(map);
                     load_first = false;
                     Scribe_Values.Look<bool>(ref load_first, "saveourship_game_start", true, true);
-                }
-
-            }
-                
-
+					Find.GameInitData.startingAndOptionalPawns.Clear();
+				}
+			}
         }
         public override void PostWorldGenerate()
         {
-            Find.GameInitData.startingPawnCount = 0;
-            load_first = true;
+			load_first = true;
         }
 
 
+		public override void PostIdeoChosen()
+		{
+			Find.GameInitData.startingPawnCount = 1;
+		}
 
-        private void Handler(Exception e) => Log.Error("Error during landing: " + e.Message);
+
+
+		private void Handler(Exception e) => Log.Error("Error during landing: " + e.Message);
 
         private void loadShip(Map map)
         {
@@ -675,11 +678,7 @@ namespace saveourship
         {
             if (other is ScenLand || other is ScenPart_StartingAnimal || (other is ScenPart_StartingThing_Defined || other is ScenPart_ScatterThingsNearPlayerStart))
                 return false;
-            if (other is ScenPart_ConfigPage_ConfigureStartingPawns)
-                Find.Scenario.RemovePart(other);
-            if (other is ScenPart_PlayerPawnsArriveMethod)
-                Find.Scenario.RemovePart(other);
-            return true;
+			return true;
         }
 
         
@@ -741,7 +740,7 @@ namespace saveourship
             
             Command_Action rename = new Command_Action();
             rename.defaultLabel = "Rename";
-            rename.icon = ContentFinder<Texture2D>.Get("UI/Buttons/Rename", true);
+            rename.icon = TexButton.Rename;
             rename.defaultDesc = outputname;
             rename.action = new Action(this.Rename);
             yield return rename;
