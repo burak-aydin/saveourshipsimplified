@@ -1,17 +1,19 @@
 # saveourshipsimplified
 saveourshipsimplified
 
-This is the saveourshipsimplifed mod for Rimworld 1.1/1.2/1.3/1.4
+This is the saveourshipsimplifed mod for Rimworld
 https://steamcommunity.com/sharedfiles/filedetails/?id=1622922005
 
 Save Our Ship Simplified
 
-A simple mod that just saves your ship and be able to transfer your colonists and stuff to another map.
-Ships doesnt have insides so if you want that check out saveourship reloaded or sos2.
+A simple mod that saves your ship and transfers your colonists and stuff to another map.
+Ships doesnt have insides so if you want that check out SOS2.
 
 This is my first mod. Save compatible for both adding and removing.
 
-Also check out
+Check out the source code at
+https://github.com/burak-aydin/saveourshipsimplified
+
 
 original
 Save our ship
