@@ -1,57 +1,42 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CC413F9B-1139-4A67-B476-1AB938D7F135}</ProjectGuid>
+    <TargetFramework>net472</TargetFramework>
+    <AssetTargetFallback>net472</AssetTargetFallback>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <OutputPath>..\1.6\Assemblies\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <RootNamespace>saveourship</RootNamespace>
     <AssemblyName>saveourship</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <PreBuildEvent>if exist "..\..\VERSION" del /q  "..\..\VERSION"</PreBuildEvent>
+    <PostBuildEvent>rmdir /s /q "..\..\Source\obj"
+date /t &gt;&gt; ..\..\VERSION
+time /t &gt;&gt; ..\..\VERSION</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <DebugType>none</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\1.5\Assemblies\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\1.5\Assemblies\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>Always</RunPostBuildEvent>
-  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Hook.cs" />
-    <Compile Include="Mod.cs" />
-    <Compile Include="ModSettings.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScenePart.cs" />
-    <Compile Include="ShipPart.cs" />
-    <Compile Include="ThingMutator.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony, Version=2.3.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Lib.Harmony.2.3.3\lib\net472\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>D:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
@@ -70,16 +55,10 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <ItemDefinitionGroup>
+    <PackageReference ExcludeAssets="runtime" />
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>rmdir /s /q "..\..\Source\obj"
-date /t &gt;&gt; ..\..\VERSION
-time /t &gt;&gt; ..\..\VERSION</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>if exist "..\..\VERSION" del /q  "..\..\VERSION"</PreBuildEvent>
-  </PropertyGroup>
 </Project>

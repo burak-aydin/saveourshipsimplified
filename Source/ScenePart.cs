@@ -55,11 +55,11 @@ namespace saveourship
 
         private void loadShip(Map map)
         {
-            Log.Message("Loading ship");
+            Log.Message("loading ship");
             string file = Path.Combine(Path.Combine(GenFilePaths.SaveDataFolderPath, "Ships"), shipFactionName + ".rwship");
             if (!File.Exists(file))
             {
-                Log.Error("File Doesnt exist");
+                Log.Error("file does not exist");
                 return;
             }
 
@@ -124,7 +124,7 @@ namespace saveourship
             IntVec3 shipcoordmin = new IntVec3(ship[0].Position.ToVector3() + offset.ToVector3());
             IntVec3 shipcoordmax = new IntVec3(ship[0].Position.ToVector3() + offset.ToVector3());
 
-            Log.Message("Reading ship contents");
+            Log.Message("reading ship contents");
             for (int i = 0; i < ship.Count; i++)
             {
                 Building building = ship.ElementAt(i);
@@ -173,7 +173,7 @@ namespace saveourship
                     building.InitializeComps();
                 }
             }
-            Log.Message("Ship contents loaded");
+            Log.Message("ship contents loaded");
 
             foreach (Pawn pawn in oldpawns)
             {
@@ -183,7 +183,7 @@ namespace saveourship
                 Current.Game.World.worldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
             }
 
-            Log.Message("Setting terrain");
+            Log.Message("setting terrain");
             // set terrain and remove objects in place
             try
             {
@@ -206,9 +206,9 @@ namespace saveourship
             }
             catch (Exception e)
             {
-                Log.Error("Error while setting terrain: " + e.Message);
+                Log.Error("error while setting terrain: " + e.Message);
             }
-            Log.Message("Fixing ship fog and deleting the roof if necessary");
+            Log.Message("fixing ship fog and deleting the roof if necessary");
             // fix fog
             try
             {
@@ -230,10 +230,10 @@ namespace saveourship
             }
             catch (Exception e)
             {
-                Log.Error("Error while fixing fog: " + e.Message);
+                Log.Error("error while fixing fog: " + e.Message);
             }
             // add ship to map
-            Log.Message("Putting the ship onto the map");
+            Log.Message("putting the ship onto the map");
             try
             {
                 new ThingMutator<Building>()
@@ -243,10 +243,10 @@ namespace saveourship
             }
             catch (Exception e)
             {
-                Log.Message("Error while putting the ship onto the map: " + e.Message);
+                Log.Message("error while putting the ship onto the map: " + e.Message);
             }
 
-            Log.Message("Loading ship completed");
+            Log.Message("loading ship completed");
         }
 
         public override IEnumerable<string> GetSummaryListEntries(string tag)
